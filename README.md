@@ -72,8 +72,8 @@ com.rentalmanagement.rentalservice
 
 1. **Clone & Configure**
    ```bash
-   git clone https://github.com/AnkitV15/Rental-Service.git
-   cd rental-service
+   git clone https://github.com/paras237/RentFlow.git
+   cd RentFlow
    ```
    Create a `.env` file (or set system env vars):
    ```properties
@@ -133,4 +133,4 @@ docker run -p 8080:8080 --env-file .env rental-backend
 | **Payments** | POST | `/api/payments/create-order` | Init Payment |
 
 ---
-*Built by [AnkitV15](https://github.com/AnkitV15) for the RentEm Platform.*
+*Built by [paras237](https://github.com/paras237) for the RentFlow Platform.*
