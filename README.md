@@ -1,7 +1,5 @@
 # Rental Service Backend
 
-![Dashboard Preview](screenshots/Dashboard-Rental.png)
-
 A production-grade, Spring Boot-based backend for the **RentFlow** property management platform. This service handles the core business logic for properties, tenants, leases, automated billing, payments, and maintenance workflows.
 
 ---
