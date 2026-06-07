@@ -1,5 +1,7 @@
 # RentFlow - Rental Management System
 
+![RentFlow Dashboard](imgs/screencapture-localhost-8080-2026-06-07-23_13_09.png)
+
 A production-grade, Spring Boot-based web application for the **RentFlow** property management platform. This system handles the core business logic for properties, tenants, leases, automated billing, payments, and maintenance workflows, all while providing a seamless glassmorphic user interface.
 
 ---
@@ -93,6 +95,12 @@ com.rentalmanagement.rentalservice
 4. **Access the Website**
    Once the server starts, open your browser and navigate to:
    **http://localhost:8080**
+
+---
+
+## 🎨 Tenant Portal
+Tenants get their own dedicated view to check their leases, track invoices, and submit maintenance tickets.
+![Tenant Portal](imgs/screencapture-localhost-8080-tenant-html-2026-06-07-23_20_05.png)
 
 ---
 
