@@ -1,0 +1,68 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+
+spring:
+  web:
+    resources:
+      cache:
+        period: 0
+        cachecontrol:
+          no-cache: true
+          no-store: true
+
+
+  application:
+    name: rental-service
+    url: ${APP_URL:http://localhost:8080}
+  profiles:
+    active: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rental_db
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: ${MAIL_HOST:smtp.ethereal.email}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:fewepu6damfy5rip@ethereal.email}
+    password: ${MAIL_PASSWORD:3PRxRRF2XZSR2JYdfS}
+    from: ${MAIL_FROM:admin@rentflow.com}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          debug: false
+
+jwt:
+  secret: ${JWT_SECRET:RentFlowSuperSecretKeyForLocalDevUseOnly2024XYZ!AbcDef}
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME:placeholder}
+  api_key: ${CLOUDINARY_API_KEY:placeholder}
+  api_secret: ${CLOUDINARY_API_SECRET:placeholder}
+
+razorpay:
+  key_id: ${RAZORPAY_KEY_ID:placeholder}
+  key_secret: ${RAZORPAY_KEY_SECRET:placeholder}
+
+app:
+  frontend-url: http://localhost:8080

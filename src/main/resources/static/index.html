@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>RentFlow — Property Management</title>
+  <meta name="description" content="RentFlow — Premium property management dashboard for owners." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="/style.css?v=11" />
+  <script src="/features.js"></script>
+</head>
+<body>
+
+<!-- ===================== MARKETPLACE SCREEN ===================== -->
+<div class="marketplace-screen" id="marketplace-screen">
+  <div class="mp-hero">
+    <div class="mp-top">
+      <div class="brand-logo"><i class="fa-solid fa-building-columns"></i><span>RentFlow</span></div>
+      <div style="display:flex;gap:1rem;">
+        <button class="btn btn-ghost btn-sm" onclick="showAuthScreen('login')">Login</button>
+        <button class="btn btn-primary btn-sm" onclick="showAuthScreen('register')">List Your Property <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+    <div class="mp-hero-content">
+      <h1>Find your perfect <em>space</em></h1>
+      <p>Browse our curated selection of premium rental properties. Apply instantly and manage everything online.</p>
+      
+      <div class="hero-search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="search" id="mp-search" placeholder="Search by city, neighborhood, or address..." oninput="filterMarketplace(this.value)" />
+        <button class="btn btn-primary btn-search" onclick="filterMarketplace(document.getElementById('mp-search').value)">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mp-content">
+    <div class="mp-section-head">
+      <h2 class="sect-title">Featured Listings</h2>
+      <p>Discover our most popular properties available right now.</p>
+    </div>
+    
+    <div id="mp-grid" class="prop-grid">
+      <div class="pulse h200"></div><div class="pulse h200"></div><div class="pulse h200"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div class="auth-screen hidden" id="auth-screen">
+  <button class="btn btn-ghost" style="position: absolute; top: 2rem; left: 3rem; z-index: 10;" onclick="showMarketplaceScreen()">
+    <i class="fa-solid fa-arrow-left"></i> Back to Home
+  </button>
+  <div class="auth-grid-bg"></div>
+  <div class="auth-orb orb-1"></div>
+  <div class="auth-orb orb-2"></div>
+
+  <div class="auth-wrap">
+
+    <!-- LEFT: brand -->
+    <div class="auth-brand">
+      <div class="brand-logo"><i class="fa-solid fa-building-columns"></i><span>RentFlow</span></div>
+      <h1>Manage properties <em>smarter</em>, not harder.</h1>
+      <p>A unified command centre for property owners — track every unit, tenant, invoice and maintenance ticket from one sleek dashboard.</p>
+      <ul class="brand-feats">
+        <li><i class="fa-solid fa-circle-check"></i> Real-time occupancy &amp; revenue</li>
+        <li><i class="fa-solid fa-circle-check"></i> Automated invoice generation</li>
+        <li><i class="fa-solid fa-circle-check"></i> Tenant portal magic-link access</li>
+        <li><i class="fa-solid fa-circle-check"></i> Maintenance ticket tracking</li>
+      </ul>
+      <div class="brand-deco">RF</div>
+    </div>
+
+    <!-- RIGHT: forms -->
+    <div class="auth-forms">
+
+      <!-- LOGIN -->
+      <div class="auth-card" id="form-login">
+        <h2>Welcome back</h2>
+        <p class="auth-sub">Sign in to your owner account</p>
+        <div id="login-error" class="alert-error hidden"></div>
+        <form id="login-form" novalidate>
+          <div class="fg">
+            <label for="login-email"><i class="fa-solid fa-envelope"></i> Email address</label>
+            <input id="login-email" type="email" class="fc" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="fg">
+            <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+            <div class="fc-wrap">
+              <input id="login-password" type="password" class="fc" placeholder="••••••••" required autocomplete="current-password" />
+              <button type="button" class="fc-eye" onclick="togglePwd('login-password',this)"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+          <button id="btn-login" type="submit" class="btn btn-primary w100">
+            <span class="btn-text"><i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Signing in…</span>
+          </button>
+        </form>
+        <p class="auth-switch">No account? <a href="#" onclick="switchAuth('register');return false">Create one free →</a></p>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-card hidden" id="form-register">
+        <h2>Create account</h2>
+        <p class="auth-sub">Register as a property owner</p>
+        <div id="register-error" class="alert-error hidden"></div>
+        <div id="register-success" class="alert-success hidden"></div>
+        <form id="register-form" novalidate>
+          <div class="fg-row">
+            <div class="fg">
+              <label for="reg-firstname">First name</label>
+              <input id="reg-firstname" type="text" class="fc" placeholder="Rahul" required autocomplete="given-name" />
+            </div>
+            <div class="fg">
+              <label for="reg-lastname">Last name</label>
+              <input id="reg-lastname" type="text" class="fc" placeholder="Sharma" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="fg">
+            <label for="reg-email"><i class="fa-solid fa-envelope"></i> Email</label>
+            <input id="reg-email" type="email" class="fc" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="fg">
+            <label for="reg-password"><i class="fa-solid fa-lock"></i> Password</label>
+            <div class="fc-wrap">
+              <input id="reg-password" type="password" class="fc" placeholder="Min 4 characters" required autocomplete="new-password" />
+              <button type="button" class="fc-eye" onclick="togglePwd('reg-password',this)"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+          <button id="btn-register" type="submit" class="btn btn-primary w100">
+            <span class="btn-text"><i class="fa-solid fa-user-plus"></i> Create Account</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Creating…</span>
+          </button>
+        </form>
+        <p class="auth-switch">Have an account? <a href="#" onclick="switchAuth('login');return false">← Sign in</a></p>
+      </div>
+
+      <!-- OTP VERIFICATION -->
+      <div class="auth-card hidden" id="form-otp">
+        <h2>Verify Email</h2>
+        <p class="auth-sub">Enter the 6-digit code sent to your email.</p>
+        <div id="otp-error" class="alert-error hidden"></div>
+        <form id="otp-form" novalidate>
+          <input type="hidden" id="otp-email" />
+          <div class="fg">
+            <label for="otp-code"><i class="fa-solid fa-key"></i> OTP Code</label>
+            <input id="otp-code" type="text" class="fc" placeholder="123456" required autocomplete="one-time-code" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 4px;" />
+          </div>
+          <button id="btn-otp" type="submit" class="btn btn-primary w100">
+            <span class="btn-text"><i class="fa-solid fa-check"></i> Verify</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Verifying…</span>
+          </button>
+        </form>
+      </div>
+
+    </div><!-- /auth-forms -->
+  </div><!-- /auth-wrap -->
+</div><!-- /auth-screen -->
+
+
+<!-- ===================== APP SCREEN ===================== -->
+<div class="app-screen hidden" id="app-screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo"><i class="fa-solid fa-building-columns"></i><span>RentFlow</span></div>
+      <button class="sb-toggle" onclick="toggleSidebar()" title="Toggle"><i class="fa-solid fa-bars"></i></button>
+    </div>
+    <nav class="sb-nav">
+      <a href="#" class="nav-item active" data-tab="overview"><i class="fa-solid fa-gauge-high"></i><span>Overview</span></a>
+      <a href="#" class="nav-item hidden" id="nav-admin" data-tab="admin"><i class="fa-solid fa-shield-halved"></i><span>Admin</span></a>
+      <a href="#" class="nav-item hidden" id="nav-agents" data-tab="agents"><i class="fa-solid fa-users-gear"></i><span>Team Agents</span></a>
+      <a href="#" class="nav-item" data-tab="applications"><i class="fa-solid fa-clipboard-user"></i><span>Applications</span></a>
+      <a href="#" class="nav-item" data-tab="properties"><i class="fa-solid fa-city"></i><span>Properties</span></a>
+      <a href="#" class="nav-item" data-tab="leases"><i class="fa-solid fa-file-contract"></i><span>Leases</span></a>
+      <a href="#" class="nav-item" data-tab="billing"><i class="fa-solid fa-file-invoice-dollar"></i><span>Billing</span></a>
+      <a href="#" class="nav-item" data-tab="maintenance"><i class="fa-solid fa-screwdriver-wrench"></i><span>Maintenance</span><span class="nav-badge hidden" id="nav-maint-badge"></span></a>
+      <a href="#" class="nav-item" data-tab="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-owner">
+        <div class="sb-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="sb-owner-info"><strong id="sidebar-owner-name">Owner</strong><span>Property Owner</span></div>
+      </div>
+      <button class="sb-logout" onclick="logout()" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main" id="main-area">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-l">
+        <button class="btn-icon mob-menu" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <h1 class="page-title" id="page-title">Dashboard Overview</h1>
+          <p class="page-sub" id="page-subtitle">Occupancy, revenue &amp; property analytics</p>
+        </div>
+      </div>
+      <div class="topbar-r">
+        <button class="btn btn-ghost btn-sm" onclick="loadAllData()" title="Refresh data"><i class="fa-solid fa-rotate-right"></i></button>
+        <button id="btn-primary-action" class="btn btn-primary" onclick="openAddPropertyModal()">
+          <i class="fa-solid fa-plus"></i> Add Property
+        </button>
+      </div>
+    </header>
+
+    <!-- ====== OVERVIEW ====== -->
+    <section id="tab-overview" class="tab active">
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Properties</span><div class="stat-ico amber"><i class="fa-solid fa-city"></i></div></div>
+          <div class="stat-val" id="stat-total-properties">—</div>
+          <div class="stat-hint">Your full portfolio</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Active Tenants</span><div class="stat-ico green"><i class="fa-solid fa-users"></i></div></div>
+          <div class="stat-val" id="stat-occupied-units">—</div>
+          <div class="stat-hint" id="stat-occupancy-rate">Occupancy rate</div>
+          <div class="stat-prog-wrap"><div class="stat-prog" id="stat-prog-bar"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Revenue</span><div class="stat-ico violet"><i class="fa-solid fa-indian-rupee-sign"></i></div></div>
+          <div class="stat-val" id="stat-total-revenue">—</div>
+          <div class="stat-hint">From paid invoices</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Open Requests</span><div class="stat-ico rose"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
+          <div class="stat-val" id="stat-active-concerns">—</div>
+          <div class="stat-hint" id="stat-emergency-count">Maintenance tickets</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-chart-pie"></i> Occupancy</h3></div>
+          <div id="occupancy-chart-wrap" style="display:flex;align-items:center;gap:1.5rem;padding:.5rem 0">
+            <svg id="occupancy-donut" width="90" height="90" viewBox="0 0 90 90" style="flex-shrink:0"></svg>
+            <div id="occupancy-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-chart-column"></i> Revenue Trend</h3></div>
+          <div id="revenue-chart-wrap" style="height:90px;display:flex;align-items:flex-end;gap:4px;padding:.5rem 0"></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-city"></i> Properties</h3><a href="#" class="link-sm" data-tab-link="properties">View all <i class="fa-solid fa-arrow-right"></i></a></div>
+          <div id="overview-properties-list" class="list-box"><div class="pulse"></div><div class="pulse mt8"></div><div class="pulse mt8"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-receipt"></i> Recent Invoices</h3><a href="#" class="link-sm" data-tab-link="billing">View all <i class="fa-solid fa-arrow-right"></i></a></div>
+          <div id="overview-invoices-list" class="list-box"><div class="pulse"></div><div class="pulse mt8"></div><div class="pulse mt8"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h3><i class="fa-solid fa-wrench"></i> Open Maintenance</h3><a href="#" class="link-sm" data-tab-link="maintenance">View all <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div id="overview-maintenance-list" class="list-box"><div class="pulse"></div><div class="pulse mt8"></div></div>
+      </div>
+    </section>
+
+    <!-- ====== SUPER ADMIN ====== -->
+    <section id="tab-admin" class="tab">
+      <div class="toolbar">
+        <div class="toolbar-l"><span class="sect-title">Platform Administration</span></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Landlords</span><div class="stat-ico amber"><i class="fa-solid fa-user-tie"></i></div></div>
+          <div class="stat-val" id="admin-landlords">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Properties</span><div class="stat-ico blue"><i class="fa-solid fa-city"></i></div></div>
+          <div class="stat-val" id="admin-properties">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Tenants</span><div class="stat-ico green"><i class="fa-solid fa-users"></i></div></div>
+          <div class="stat-val" id="admin-tenants">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Total Units</span><div class="stat-ico violet"><i class="fa-solid fa-door-open"></i></div></div>
+          <div class="stat-val" id="admin-units">—</div>
+        </div>
+      </div>
+    </section>
+
+      <!-- ====== AGENTS ====== -->
+      <section id="tab-agents" class="tab">
+        <div class="toolbar">
+          <div class="toolbar-l"><span class="sect-title">Team Agents</span></div>
+          <div class="toolbar-r">
+            <button class="btn btn-primary" onclick="openModal('modal-invite-agent')"><i class="fa-solid fa-plus"></i> Invite Agent</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Agent</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="agents-tbody"><tr><td colspan="5"><div class="pulse loading-row"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== APPLICATIONS ====== -->
+      <section id="tab-applications" class="tab">
+        <div class="toolbar">
+          <div class="toolbar-l"><span class="sect-title">Rental Applications</span></div>
+          <div class="toolbar-r">
+            <button class="btn btn-ghost btn-sm" onclick="loadApplications()"><i class="fa-solid fa-rotate-right"></i></button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Applicant</th><th>Property / Unit</th><th>Contact</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="applications-tbody"><tr><td colspan="6"><div class="pulse loading-row"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== PROPERTIES ====== -->
+    <section id="tab-properties" class="tab">
+      <div class="toolbar">
+        <div class="toolbar-l"><span class="sect-title">Your Properties</span></div>
+        <div class="toolbar-r">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="property-search" placeholder="Search…" oninput="filterProperties(this.value)" /></div>
+          <button class="btn btn-ghost" onclick="openAddUnitModal()"><i class="fa-solid fa-door-open"></i> Add Unit</button>
+          <button class="btn btn-primary" onclick="openAddPropertyModal()"><i class="fa-solid fa-plus"></i> New Property</button>
+        </div>
+      </div>
+      <div id="properties-grid" class="prop-grid"><div class="pulse h200"></div><div class="pulse h200"></div><div class="pulse h200"></div></div>
+    </section>
+
+    <!-- ====== LEASES ====== -->
+    <section id="tab-leases" class="tab">
+      <div class="toolbar">
+        <div class="toolbar-l"><span class="sect-title">Lease Agreements</span></div>
+        <div class="toolbar-r">
+          <div class="chips" id="lease-filter-chips">
+            <button class="chip active" onclick="filterLeases('ALL',this)">All</button>
+            <button class="chip" onclick="filterLeases('ACTIVE',this)">Active</button>
+            <button class="chip" onclick="filterLeases('INACTIVE',this)">Inactive</button>
+          </div>
+          <button class="btn btn-primary" onclick="openAddLeaseModal()"><i class="fa-solid fa-file-signature"></i> New Lease</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>Unit / Property</th><th>Tenant</th><th>Start</th><th>End / Expiry</th><th>Status</th><th>Portal</th><th>Actions</th></tr></thead>
+            <tbody id="leases-tbody"><tr><td colspan="7"><div class="pulse loading-row"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== BILLING ====== -->
+    <section id="tab-billing" class="tab">
+      <div class="billing-summary" id="billing-summary"></div>
+      <div class="billing-grid">
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-calculator"></i> Generate Invoice</h3></div>
+          <div style="padding: 2rem 1.5rem; text-align: center;">
+            <p style="color: var(--t2); font-size: .85rem; margin-bottom: 1.5rem;">Create a detailed, itemized invoice for your tenants, including rent, utilities, and custom charges.</p>
+            <button class="btn btn-primary" onclick="openCreateInvoiceModal()">
+              <i class="fa-solid fa-file-invoice"></i> Create Custom Invoice
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <h3><i class="fa-solid fa-receipt"></i> Invoice History</h3>
+            <div class="chips" id="invoice-filter-chips" style="gap:.35rem">
+              <button class="chip active" onclick="filterInvoices('ALL',this)">All</button>
+              <button class="chip" onclick="filterInvoices('PAID',this)">Paid</button>
+              <button class="chip" onclick="filterInvoices('PENDING',this)">Pending</button>
+              <button class="chip" onclick="filterInvoices('OVERDUE',this)">Overdue</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>Unit / Tenant</th><th>Rent</th><th>Electricity</th><th>Charges</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="invoices-tbody"><tr><td colspan="8"><div class="pulse loading-row"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== MAINTENANCE ====== -->
+    <section id="tab-maintenance" class="tab">
+      <div class="maint-summary card">
+        <div class="maint-stat"><div class="maint-n" id="maint-total">—</div><span>Total</span></div>
+        <div class="maint-stat"><div class="maint-n red" id="maint-emergency">—</div><span>Emergency</span></div>
+        <div class="maint-stat"><div class="maint-n amber" id="maint-pending-count">—</div><span>Pending</span></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-l"><span class="sect-title">Requests</span><span class="cnt-badge" id="ticket-count-badge">0</span></div>
+        <div class="toolbar-r">
+          <div class="chips" id="maintenance-filter">
+            <button class="chip active" onclick="filterMaintenance('ALL',this)">All</button>
+            <button class="chip" onclick="filterMaintenance('PENDING',this)">Pending</button>
+            <button class="chip" onclick="filterMaintenance('IN_PROGRESS',this)">In Progress</button>
+            <button class="chip" onclick="filterMaintenance('COMPLETED',this)">Completed</button>
+          </div>
+        </div>
+      </div>
+      <div id="maintenance-tickets-list" class="tickets"><div class="pulse h80"></div><div class="pulse h80 mt8"></div></div>
+    </section>
+
+    <!-- ====== SETTINGS ====== -->
+    <section id="tab-settings" class="tab">
+      <div class="settings-grid">
+        <div class="card span2">
+          <div class="card-hd"><h3><i class="fa-solid fa-circle-user"></i> Account Details</h3></div>
+          <div class="info-rows">
+            <div class="info-row"><span>Email</span><strong id="settings-email-display">—</strong></div>
+            <div class="info-row"><span>Role</span><strong>Property Owner</strong></div>
+            <div class="info-row"><span>Status</span><strong class="green-text"><i class="fa-solid fa-circle-check"></i> Active</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-pen-to-square"></i> Update Profile</h3></div>
+          <div id="profile-update-error" class="alert-error hidden"></div>
+          <div id="profile-update-success" class="alert-success hidden"></div>
+          <form id="profile-update-form">
+            <div class="fg-row">
+              <div class="fg"><label>First Name</label><input id="settings-firstname" type="text" class="fc" placeholder="Rahul" required /></div>
+              <div class="fg"><label>Last Name</label><input id="settings-lastname" type="text" class="fc" placeholder="Sharma" /></div>
+            </div>
+            <div class="fg"><label>Email <span class="muted">(read-only)</span></label><input id="settings-email" type="email" class="fc" disabled /></div>
+            <button id="btn-update-profile" type="submit" class="btn btn-primary">
+              <span class="btn-text"><i class="fa-solid fa-floppy-disk"></i> Save Changes</span>
+              <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Saving…</span>
+            </button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3><i class="fa-solid fa-key"></i> Change Password</h3></div>
+          <div id="password-change-error" class="alert-error hidden"></div>
+          <div id="password-change-success" class="alert-success hidden"></div>
+          <form id="password-change-form">
+            <div class="fg"><label>Current Password</label><div class="fc-wrap"><input id="settings-old-password" type="password" class="fc" placeholder="••••••••" required /><button type="button" class="fc-eye" onclick="togglePwd('settings-old-password',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+            <div class="fg"><label>New Password</label><div class="fc-wrap"><input id="settings-new-password" type="password" class="fc" placeholder="Min 4 chars" required /><button type="button" class="fc-eye" onclick="togglePwd('settings-new-password',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+            <div class="fg"><label>Confirm Password</label><div class="fc-wrap"><input id="settings-confirm-password" type="password" class="fc" placeholder="Repeat" required /><button type="button" class="fc-eye" onclick="togglePwd('settings-confirm-password',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+            <button id="btn-change-password" type="submit" class="btn btn-primary">
+              <span class="btn-text"><i class="fa-solid fa-lock"></i> Change Password</span>
+              <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Updating…</span>
+            </button>
+          </form>
+        </div>
+        <div class="card span2">
+          <div class="card-hd"><h3><i class="fa-solid fa-right-from-bracket"></i> Session</h3></div>
+          <p class="muted" style="font-size:.85rem;margin-bottom:1rem">You are signed in as a Property Owner. Signing out clears your local session.</p>
+          <button class="btn btn-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /main -->
+</div><!-- /app-screen -->
+
+
+<!-- ====== MODAL: Property ====== -->
+<div class="modal" id="modal-property">
+  <div class="modal-bg" onclick="closeModal('modal-property')"></div>
+  <div class="modal-box">
+    <div class="modal-hd"><h2><i class="fa-solid fa-city"></i> Add New Property</h2><button class="btn-icon" onclick="closeModal('modal-property')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form id="add-property-form" onsubmit="event.preventDefault();submitAddProperty();">
+      <div class="modal-body">
+        <div id="prop-modal-error" class="alert-error hidden"></div>
+        <div class="fg"><label><i class="fa-solid fa-signature"></i> Property Name</label><input id="prop-name" type="text" class="fc" placeholder="e.g. Sunshine Residency" required /></div>
+        <div class="fg"><label><i class="fa-solid fa-location-dot"></i> Address</label><textarea id="prop-address" class="fc" placeholder="Full address" rows="2" required></textarea></div>
+        <div class="fg"><label><i class="fa-solid fa-align-left"></i> Description</label><textarea id="prop-description" class="fc" placeholder="Detailed property description..." rows="3"></textarea></div>
+        <div class="fg"><label><i class="fa-solid fa-images"></i> Property Images</label><input id="prop-image" type="file" accept="image/*" class="fc" multiple /></div>
+      </div>
+      <div class="modal-ft"><button type="button" class="btn btn-ghost" onclick="closeModal('modal-property')">Cancel</button><button id="btn-save-property" type="submit" class="btn btn-primary"><span class="btn-text"><i class="fa-solid fa-plus"></i> Create</span><span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span></button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== MODAL: Unit ====== -->
+<div class="modal" id="modal-unit">
+  <div class="modal-bg" onclick="closeModal('modal-unit')"></div>
+  <div class="modal-box">
+    <div class="modal-hd"><h2><i class="fa-solid fa-door-open"></i> Add New Unit</h2><button class="btn-icon" onclick="closeModal('modal-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form id="add-unit-form" onsubmit="event.preventDefault();submitAddUnit();">
+      <div class="modal-body">
+        <div id="unit-modal-error" class="alert-error hidden"></div>
+        <div class="fg"><label><i class="fa-solid fa-city"></i> Property</label><select id="unit-property-id" class="fc" required><option value="" disabled selected>Choose property…</option></select></div>
+        <div class="fg-row">
+          <div class="fg"><label><i class="fa-solid fa-hashtag"></i> Unit Number</label><input id="unit-number" type="text" class="fc" placeholder="A-101" required /></div>
+          <div class="fg"><label><i class="fa-solid fa-indian-rupee-sign"></i> Base Rent/mo</label><input id="unit-rent" type="number" class="fc" placeholder="12000" min="0" required /></div>
+        </div>
+        <div class="fg"><label>Billing Type</label><select id="unit-billing-type" class="fc" required><option value="FIXED">Fixed</option><option value="METERED">Metered (electricity)</option></select></div>
+        <div id="unit-metered-configs" class="hidden">
+          <div class="fg-row">
+            <div class="fg"><label>Rate/kWh (₹)</label><input id="unit-elec-rate" type="number" class="fc" placeholder="6.50" step="0.01" min="0" /></div>
+            <div class="fg"><label>Last Reading (kWh)</label><input id="unit-last-reading" type="number" class="fc" placeholder="1000" step="0.01" min="0" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft"><button type="button" class="btn btn-ghost" onclick="closeModal('modal-unit')">Cancel</button><button id="btn-save-unit" type="submit" class="btn btn-primary"><span class="btn-text"><i class="fa-solid fa-plus"></i> Create</span><span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span></button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== MODAL: Lease ====== -->
+<div class="modal" id="modal-lease">
+  <div class="modal-bg" onclick="closeModal('modal-lease')"></div>
+  <div class="modal-box modal-lg">
+    <div class="modal-hd"><h2><i class="fa-solid fa-file-signature"></i> Create New Lease</h2><button class="btn-icon" onclick="closeModal('modal-lease')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form id="add-lease-form" onsubmit="event.preventDefault();submitAddLease();">
+      <div class="modal-body">
+        <div id="lease-modal-error" class="alert-error hidden"></div>
+        <div class="fg"><label><i class="fa-solid fa-door-open"></i> Vacant Unit</label><select id="lease-unit-id" class="fc" required><option value="" disabled selected>Choose vacant unit…</option></select></div>
+        <div class="fg-row">
+          <div class="fg"><label><i class="fa-solid fa-user"></i> Tenant Name</label><input id="lease-tenant-name" type="text" class="fc" placeholder="Priya Singh" required /></div>
+          <div class="fg"><label><i class="fa-solid fa-envelope"></i> Tenant Email</label><input id="lease-tenant-email" type="email" class="fc" placeholder="priya@example.com" required /></div>
+        </div>
+        <div class="fg"><label><i class="fa-solid fa-phone"></i> Phone <span class="muted">(optional)</span></label><input id="lease-tenant-phone" type="tel" class="fc" placeholder="+91 98765 43210" /></div>
+        <div class="fg-row">
+          <div class="fg"><label><i class="fa-regular fa-calendar"></i> Start Date</label><input id="lease-start-date" type="date" class="fc" required /></div>
+          <div class="fg"><label><i class="fa-regular fa-calendar-check"></i> End Date</label><input id="lease-end-date" type="date" class="fc" required /></div>
+        </div>
+        <p class="f-hint"><i class="fa-solid fa-circle-info" style="color:#f59e0b"></i> A magic-link will be emailed to the tenant for portal access.</p>
+      </div>
+      <div class="modal-ft"><button type="button" class="btn btn-ghost" onclick="closeModal('modal-lease')">Cancel</button><button id="btn-save-lease" type="submit" class="btn btn-primary"><span class="btn-text"><i class="fa-solid fa-file-signature"></i> Create Lease</span><span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span></button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== MODAL: Edit Property ====== -->
+<div class="modal" id="modal-edit-property">
+  <div class="modal-bg" onclick="closeModal('modal-edit-property')"></div>
+  <div class="modal-box">
+    <div class="modal-hd"><h2><i class="fa-solid fa-pen-to-square"></i> Edit Property</h2><button class="btn-icon" onclick="closeModal('modal-edit-property')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form id="edit-property-form" onsubmit="event.preventDefault();submitEditProperty();">
+      <div class="modal-body">
+        <input type="hidden" id="edit-property-id" />
+        <div id="edit-prop-error" class="alert-error hidden"></div>
+        <div class="fg"><label><i class="fa-solid fa-signature"></i> Property Name</label><input id="edit-prop-name" type="text" class="fc" required /></div>
+        <div class="fg"><label><i class="fa-solid fa-location-dot"></i> Address</label><textarea id="edit-prop-address" class="fc" rows="2" required></textarea></div>
+        <div class="fg"><label><i class="fa-solid fa-align-left"></i> Description</label><textarea id="edit-prop-description" class="fc" rows="3"></textarea></div>
+        <div class="fg"><label><i class="fa-solid fa-images"></i> Property Images</label><input id="edit-prop-image" type="file" accept="image/*" class="fc" multiple /></div>
+      </div>
+      <div class="modal-ft"><button type="button" class="btn btn-ghost" onclick="closeModal('modal-edit-property')">Cancel</button><button id="btn-save-edit-property" type="submit" class="btn btn-primary"><span class="btn-text"><i class="fa-solid fa-floppy-disk"></i> Save</span><span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span></button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== MODAL: Edit Unit ====== -->
+<div class="modal" id="modal-edit-unit">
+  <div class="modal-bg" onclick="closeModal('modal-edit-unit')"></div>
+  <div class="modal-box">
+    <div class="modal-hd"><h2><i class="fa-solid fa-pen-to-square"></i> Edit Unit</h2><button class="btn-icon" onclick="closeModal('modal-edit-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form id="edit-unit-form" onsubmit="event.preventDefault();submitEditUnit();">
+      <div class="modal-body">
+        <input type="hidden" id="edit-unit-id" />
+        <div id="edit-unit-error" class="alert-error hidden"></div>
+        <div class="fg-row">
+          <div class="fg"><label><i class="fa-solid fa-hashtag"></i> Unit Number</label><input id="edit-unit-number" type="text" class="fc" required /></div>
+          <div class="fg"><label><i class="fa-solid fa-indian-rupee-sign"></i> Base Rent/mo</label><input id="edit-unit-rent" type="number" class="fc" min="0" required /></div>
+        </div>
+        <div class="fg"><label>Billing Type</label><select id="edit-unit-billing-type" class="fc" required><option value="FIXED">Fixed</option><option value="METERED">Metered (electricity)</option></select></div>
+        <div class="fg"><label>Status</label><select id="edit-unit-status" class="fc" required><option value="VACANT">Vacant</option><option value="OCCUPIED">Occupied</option><option value="MAINTENANCE">Maintenance</option></select></div>
+        <div id="edit-unit-metered" class="hidden">
+          <div class="fg-row">
+            <div class="fg"><label>Rate/kWh (₹)</label><input id="edit-unit-elec-rate" type="number" class="fc" step="0.01" min="0" /></div>
+            <div class="fg"><label>Last Reading (kWh)</label><input id="edit-unit-last-reading" type="number" class="fc" step="0.01" min="0" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft"><button type="button" class="btn btn-ghost" onclick="closeModal('modal-edit-unit')">Cancel</button><button id="btn-save-edit-unit" type="submit" class="btn btn-primary"><span class="btn-text"><i class="fa-solid fa-floppy-disk"></i> Save</span><span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span></button></div>
+    </form>
+  </div>
+</div>
+
+  <!-- ====== RECURRING CHARGES MODAL ====== -->
+  <div class="modal" id="modal-recurring-charges">
+    <div class="modal-bg" onclick="closeModal('modal-recurring-charges')"></div>
+    <div class="modal-box" style="max-width:550px">
+      <div class="modal-hd">
+        <h2><i class="fa-solid fa-repeat"></i> Recurring Billing Settings</h2>
+        <button class="btn-icon" onclick="closeModal('modal-recurring-charges')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="recurring-charges-form">
+        <input type="hidden" id="recurring-lease-id" />
+        <div class="modal-body">
+          <p style="font-size:.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">
+            Define automated recurring charges (e.g., Water, Internet, Parking) for this tenant. These will automatically be added to every new invoice generated for this lease.
+          </p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+            <h4 style="font-family:'Syne',sans-serif; font-size:.9rem;"><i class="fa-solid fa-list"></i> Monthly Charges</h4>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="addRecurringChargeRow()">
+              <i class="fa-solid fa-plus"></i> Add Row
+            </button>
+          </div>
+          <div id="recurring-charges-container">
+            <!-- Rows dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-ft">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('modal-recurring-charges')">Cancel</button>
+          <button type="submit" id="btn-submit-recurring-charges" class="btn btn-primary">
+            <span class="btn-text">Save Changes</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- ====== CREATE INVOICE MODAL ====== -->
+<div class="modal" id="modal-create-invoice">
+  <div class="modal-bg" onclick="closeModal('modal-create-invoice')"></div>
+  <div class="modal-box" style="max-width:550px">
+    <div class="modal-hd">
+      <h2><i class="fa-solid fa-file-invoice"></i> Create Custom Invoice</h2>
+      <button class="btn-icon" onclick="closeModal('modal-create-invoice')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="create-invoice-form">
+      <div class="modal-body">
+        <div class="fg">
+          <label for="create-inv-unit"><i class="fa-solid fa-door-open"></i> Select Unit</label>
+          <select id="create-inv-unit" class="fc" required><option value="" disabled selected>Choose a unit…</option></select>
+        </div>
+        
+        <div id="create-inv-metered-group" class="hidden">
+          <div class="fg" style="margin-bottom:.5rem;">
+            <label for="create-inv-meter"><i class="fa-solid fa-bolt"></i> Current Meter Reading (kWh) <span style="color:var(--t3); font-weight:400; font-size:.8rem;">(Optional if adding custom charges)</span></label>
+            <input id="create-inv-meter" type="number" class="fc" placeholder="e.g. 1240" step="0.01" min="0" />
+            <p class="f-hint" style="margin-top:.3rem">Previous: <strong id="create-inv-prev-meter">—</strong> kWh &nbsp;·&nbsp; Leave blank to only charge custom items</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--b2); padding-top: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+            <h4 style="font-family:'Syne',sans-serif; font-size:.9rem;"><i class="fa-solid fa-list"></i> Custom Charges</h4>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="addCustomInvoiceItemRow()">
+              <i class="fa-solid fa-plus"></i> Add Charge
+            </button>
+          </div>
+          
+          <div id="custom-invoice-items-container" style="display:flex; flex-direction:column; gap:.8rem;">
+            <!-- Rows injected via JS -->
+            <div style="text-align:center; color:var(--t3); font-size:.8rem; padding:.5rem 0;" id="empty-items-msg">
+              No custom charges added. Base Rent will be included automatically.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-create-invoice')">Cancel</button>
+        <button type="submit" id="btn-submit-create-invoice" class="btn btn-primary">
+          <span class="btn-text">Generate Invoice</span>
+          <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Generating...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== INVOICE DETAILS MODAL (PRINTABLE) ====== -->
+<div class="modal" id="modal-invoice-details">
+  <div class="modal-bg no-print" onclick="closeModal('modal-invoice-details')"></div>
+  <div class="modal-box" style="max-width:650px">
+    <div class="modal-hd no-print">
+      <h2><i class="fa-solid fa-file-invoice"></i> Invoice Details</h2>
+      <button class="btn-icon" onclick="closeModal('modal-invoice-details')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body print-area" id="invoice-print-area">
+      <div class="invoice-header">
+        <div class="invoice-brand">
+          <i class="fa-solid fa-building-columns"></i>
+          <div><h2 id="inv-det-owner-name">RentFlow Properties</h2><div id="inv-det-owner-email">hello@rentflow.com</div></div>
+        </div>
+        <div class="invoice-meta">
+          <h3>INVOICE</h3>
+          <div id="inv-det-status-badge" class="badge"></div>
+          <div><span class="f-lbl">Invoice #</span> <strong id="inv-det-id"></strong></div>
+          <div><span class="f-lbl">Issued</span> <span id="inv-det-issued"></span></div>
+          <div><span class="f-lbl">Due Date</span> <span id="inv-det-due"></span></div>
+        </div>
+      </div>
+      <div class="invoice-parties">
+        <div>
+          <span class="f-lbl">Billed To</span>
+          <strong id="inv-det-tenant-name" style="display:block;margin-top:.2rem"></strong>
+          <div id="inv-det-tenant-email" style="color:var(--t3);font-size:.8rem"></div>
+        </div>
+        <div style="text-align:right">
+          <span class="f-lbl">Property & Unit</span>
+          <strong id="inv-det-unit-number" style="display:block;margin-top:.2rem"></strong>
+          <div id="inv-det-period" style="color:var(--t3);font-size:.8rem"></div>
+        </div>
+      </div>
+      <table class="tbl mt8" style="width:100%">
+        <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody id="inv-det-items"></tbody>
+      </table>
+      <div class="invoice-total">
+        <span>Total Due</span>
+        <strong id="inv-det-total"></strong>
+      </div>
+    </div>
+    <div class="modal-ft no-print">
+      <button class="btn btn-ghost" onclick="closeModal('modal-invoice-details')">Close</button>
+      <button class="btn btn-primary" onclick="printInvoice()"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-invoice-detail">
+  <div class="modal-box w-lg invoice-modal-box" style="background:#fff; color:#000; padding:0;">
+    <div id="invoice-detail-content"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-apply">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="apply-property-name">Apply to Rent</h2>
+      <button class="modal-close" onclick="closeModal('modal-apply')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="apply-form" novalidate>
+        <input type="hidden" id="apply-property-id" />
+        <div class="fg">
+          <label>Select Unit</label>
+          <select id="apply-unit-id" class="fc" required></select>
+        </div>
+        <div class="fg">
+          <label>Full Name</label>
+          <input type="text" id="apply-name" class="fc" required placeholder="John Doe" />
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <input type="email" id="apply-email" class="fc" required placeholder="john@example.com" />
+        </div>
+        <div class="fg">
+          <label>Phone Number</label>
+          <input type="text" id="apply-phone" class="fc" required placeholder="+1 234 567 8900" />
+        </div>
+        <div class="fg">
+          <label>Message (Optional)</label>
+          <textarea id="apply-msg" class="fc" rows="3" placeholder="I'm interested in this unit..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('modal-apply')">Cancel</button>
+          <button type="submit" id="btn-submit-apply" class="btn btn-primary">
+            <span class="btn-text">Submit Application</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Submitting...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-invite-agent">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Invite Agent</h2>
+      <button class="modal-close" onclick="closeModal('modal-invite-agent')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="invite-agent-form" novalidate>
+        <div class="fg">
+          <label>Agent Name</label>
+          <input type="text" id="agent-username" class="fc" required placeholder="Jane Doe" />
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <input type="email" id="agent-email" class="fc" required placeholder="jane@example.com" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('modal-invite-agent')">Cancel</button>
+          <button type="submit" id="btn-submit-invite" class="btn btn-primary">
+            <span class="btn-text">Send Invitation</span>
+            <span class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Inviting...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  </div><!-- /modals-container -->
+
+  <div id='toast-container' class='toast-container'></div>
+  <script src='app.js?v=18'></script>
+</body>
+</html>

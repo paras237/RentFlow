@@ -1,0 +1,177 @@
+package com.rentalmanagement.rentalservice.service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.rentalmanagement.rentalservice.dto.LoginRequest;
+import com.rentalmanagement.rentalservice.dto.LoginResponse;
+import com.rentalmanagement.rentalservice.dto.RegisterRequest;
+import com.rentalmanagement.rentalservice.exception.EmailAlreadyExistsException;
+import com.rentalmanagement.rentalservice.exception.EmailNotVerifiedException;
+import com.rentalmanagement.rentalservice.exception.InvalidCredentialsException;
+import com.rentalmanagement.rentalservice.exception.VerificationTokenException;
+import com.rentalmanagement.rentalservice.model.Owner;
+import com.rentalmanagement.rentalservice.repository.OwnerRepository;
+import com.rentalmanagement.rentalservice.util.JwtUtil;
+import com.rentalmanagement.rentalservice.security.RoleConstants;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AuthService {
+
+    private final OwnerRepository ownerRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+
+    private final JwtUtil jwtUtil;
+
+    @Transactional
+    public void register(RegisterRequest registerRequest) {
+        String normalizedEmail = normalizeEmail(registerRequest.getEmail());
+        log.info("Registering user: {}", normalizedEmail);
+
+        if (ownerRepository.existsByEmail(normalizedEmail)) {
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+
+        String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
+
+        // Generate a 6-digit OTP
+        String otpCode = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        Owner owner = Owner.builder()
+                .role(RoleConstants.ROLE_OWNER)
+                .publicId(UUID.randomUUID().toString())
+                .username(registerRequest.getUsername())
+                .email(normalizedEmail)
+                .password(hashedPassword)
+                .isVerified(false)
+                .verificationToken(otpCode)
+                .verificationExpires(LocalDateTime.now().plusHours(1))
+                .build();
+
+        try {
+            ownerRepository.save(owner);
+            emailService.sendOtpEmail(normalizedEmail, otpCode);
+        } catch (DataIntegrityViolationException e) {
+            // Handle potential race condition where the email becomes non-unique between
+            // existsByEmail and save
+            log.warn("Data integrity violation while registering email {}: {}", normalizedEmail, e.getMessage());
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+
+        // Best-effort: send welcome/verification email. Failures are logged, not thrown.
+        try {
+            notificationService.sendVerificationEmail(owner);
+        } catch (Exception e) {
+            log.warn("Could not send verification email to {} (SMTP may not be configured): {}",
+                    normalizedEmail, e.getMessage());
+        }
+
+    }
+
+    public LoginResponse login(LoginRequest loginRequest) {
+        String normalizedEmail = normalizeEmail(loginRequest.getEmail());
+        log.info("Attempting to log in user with email: {}", normalizedEmail);
+        Optional<Owner> ownerOptional = ownerRepository.findByEmail(normalizedEmail);
+
+        if (ownerOptional.isEmpty()) {
+            log.error("Login failed: No user found with email {}", normalizedEmail);
+            throw new InvalidCredentialsException("Invalid Email or Password");
+        }
+
+        Owner owner = ownerOptional.get();
+        boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), owner.getPassword());
+
+        if (!passwordMatches) {
+            log.error("Login failed: Password does not match for user {}", normalizedEmail);
+            throw new InvalidCredentialsException("Invalid Email or Password");
+        }
+
+        if (!owner.isVerified()) {
+            log.warn("Login failed: Email not verified for user {}", normalizedEmail);
+            throw new EmailNotVerifiedException("Email not Verified");
+        }
+
+        String jwt = jwtUtil.generateToken(owner.getEmail(), owner.getPublicId(), owner.getRole());
+
+        LoginResponse response = LoginResponse.builder()
+                .accessToken(jwt)
+                .tokenType("Bearer")
+                .expiresIn(jwtUtil.getExpirationMillis())
+                .ownerId(owner.getPublicId())
+                .email(owner.getEmail())
+                .username(owner.getUsername())
+                .role(owner.getRole())
+                .build();
+
+        return response;
+    }
+
+    @Transactional
+    public void verifyEmail(String token, String email) {
+        log.info("Inside Auth Service: verifyEmail() for email: {}", email);
+        Owner owner = ownerRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(() -> new VerificationTokenException("User not found"));
+
+        if (!token.equals(owner.getVerificationToken())) {
+            throw new VerificationTokenException("Invalid OTP Code");
+        }
+
+        if (owner.getVerificationExpires() != null && owner.getVerificationExpires().isBefore(LocalDateTime.now())) {
+            throw new VerificationTokenException("OTP Code has Expired. Please request a new one");
+        }
+
+        if (owner.isVerified()) {
+            log.info("verifyEmail called for already verified email: {}", owner.getEmail());
+            return;
+        }
+
+        owner.setVerified(true);
+        owner.setVerificationToken(null);
+        owner.setVerificationExpires(null);
+        ownerRepository.save(owner);
+    }
+
+    public LoginResponse updateProfile(com.rentalmanagement.rentalservice.model.Owner owner,
+            com.rentalmanagement.rentalservice.dto.UpdateProfileRequest request) {
+        owner.setUsername(request.getUsername());
+        ownerRepository.save(owner);
+
+        // Update token maybe? No, token has internal info. But we return login response
+        // to update client state if needed.
+        // Actually client might just need the updated user object.
+        return LoginResponse.builder()
+                .accessToken("KEPT_OLD_TOKEN_OR_REGENERATE") // Ideally regenerate if username is in token
+                .ownerId(owner.getPublicId())
+                .email(owner.getEmail())
+                .username(owner.getUsername())
+                .role(owner.getRole())
+                .build();
+    }
+
+    public void changePassword(com.rentalmanagement.rentalservice.model.Owner owner,
+            com.rentalmanagement.rentalservice.dto.ChangePasswordRequest request) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), owner.getPassword())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+        owner.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        ownerRepository.save(owner);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+}

@@ -1,0 +1,98 @@
+package com.rentalmanagement.rentalservice.config;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.rentalmanagement.rentalservice.security.JwtAuthenticationEntryPoint;
+import com.rentalmanagement.rentalservice.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(configurationSource()))
+                .csrf(csrf -> csrf.disable()) // Disabled for REST APIs
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public auth endpoints
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-email", "/api/auth/verify-otp").permitAll()
+                        .requestMatchers("/", "/index.html", "/style.css", "/app.js", "/tenant.html").permitAll()
+                        
+                        // Public Marketplace
+                        .requestMatchers("/api/public/**").permitAll()
+
+                        // Verification Link
+                        .requestMatchers("/api/leases/verify/**").permitAll()
+                        .requestMatchers("/api/leases/verify/*/maintenance").permitAll()
+
+                        // Payment Endpoints
+                        .requestMatchers("/api/payments/**").permitAll()
+
+                        // Tenant portal (magic link handles access)
+                        .requestMatchers("/api/tenant/portal/**").permitAll()
+
+                        // Actuator endpoints
+                        .requestMatchers("/actuator/**").permitAll()
+
+                        .requestMatchers("/api/leases/**").permitAll()
+                        // Owner dashboard (protected)
+                        .requestMatchers("/api/owner/**").hasAnyRole("OWNER", "AGENT")
+
+                        // Everything else requires authentication (including /api/auth/logout)
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource configurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", frontendUrl));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.setCorsConfigurations(Map.of("/**", configuration));
+        return source;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+}
